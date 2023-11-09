@@ -1,55 +1,16 @@
-# ASP.NET Core
-- task: AzureRmWebAppDeployment@4
-  inputs:
-    ConnectionType: 'AzureRM'
-    azureSubscription: 'Azure subscription 1(ebc57b5e-3cb3-42fe-9023-47107d93589f)'
-    appType: 'webAppLinux'
-    WebAppName: 'trps7'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
 trigger:
-- master
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
 
 jobs:
-- job: Linux
-  pool:
-    vmImage: 'Ubuntu 16.04'
+- job: RunDockerContainer
+  displayName: 'Run Nginx Container'
   steps:
-  - task: DotNetCoreInstaller@0
-    inputs:
-      packageType: 'sdk'
-      version: '2.2.401'
-  - script: dotnet build ./SimplCommerce.sln
-    displayName: 'dotnet build'
-  - script: ./run-tests.sh
-    displayName: 'run tests'
-  - task: PublishTestResults@2
-    displayName: 'Publish Test Results **/*.trx'
-    condition: succeededOrFailed()
-    inputs:
-      testResultsFormat: VSTest
-      testResultsFiles: '**/*.trx' 
+  - script: docker run -p 80:80 -d nginxdemos/hello
+    displayName: 'Run Docker Container'
 
-- job: Windows
-  pool:
-    vmImage: 'windows-2019'
-  steps:
-  - task: DotNetCoreInstaller@0
-    inputs:
-      packageType: 'sdk'
-      version: '2.2.401'
-  - script: dotnet build ./SimplCommerce.sln
-    displayName: 'dotnet build'
-  - task: PowerShell@2
-    inputs:
-      filePath: .\run-tests.ps1
-    displayName: 'run tests'
-  - task: PublishTestResults@2
-    displayName: 'Publish Test Results **/*.trx'
-    condition: succeededOrFailed()
-    inputs:
-      testResultsFormat: VSTest
-      testResultsFiles: '**/*.trx' 
+  - script: 
+      curl http://localhost
+    displayName: 'Test Nginx Container'
